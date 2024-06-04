@@ -15,8 +15,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
-  const [avatar, setAvatar] = useState('https://images.search.yahoo.com/images/view;_ylt=AwrFckV3EFdmiIMMJTmJzbkF;_ylu=c2VjA3NyBHNsawNpbWcEb2lkAzYzNzAwZmRiOGQ5MzlhYzIwZmFmNGIxNmZjM2M1NWU3BGdwb3MDNDMEaXQDYmluZw--?back=https%3A%2F%2Fimages.search.yahoo.com%2Fsearch%2Fimages%3Fp%3Davatar%2Burls%26type%3DD211US885G0%26fr%3Dmcafee%26fr2%3Dpiv-web%26tab%3Dorganic%26ri%3D43&w=182&h=182&imgurl=www.screenfeed.fr%2Fwp-content%2Fuploads%2F2013%2F10%2Fdefault-avatar.png&rurl=https%3A%2F%2Fwww.screenfeed.fr%2Fblog%2Furl-dun-avatar-avec-get_avatar_url-01496%2F&size=+1.6KB&p=avatar+urls&oid=63700fdb8d939ac20faf4b16fc3c55e7&fr2=piv-web&fr=mcafee&tt=Url+d%E2%80%99un+avatar+avec+get_avatar_url%28%29&b=0&ni=21&no=43&ts=&tab=organic&sigr=oek2jRE.znA_&sigb=dQZYnhwk9sfw&sigi=ZyZyQJzGwNfP&sigt=pTPGp9SPPqls&.crumb=alJscaB1VIz&fr=mcafee&fr2=piv-web&type=D211US885G0');
-
+  const [avatar, setAvatar] = useState("https://www.screenfeed.fr/wp-content/uploads/2013/10/default-avatar.png")
   const [isFormValid, setIsFormValid] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
 

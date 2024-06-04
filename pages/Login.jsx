@@ -4,14 +4,17 @@ import { signInWithEmailAndPassword } from '@firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { firebaseAuth, firestoreDB } from '../components/firebase.config';
 import { getDoc, doc,docS } from 'firebase/firestore';
+import { useDispatch } from 'react-redux';
+import { SET_USER } from '../store/actions/userActions';
 
 const { width, height } = Dimensions.get('window');
 
-const LoginPage = () => {
+const LoginPage = () => { 
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isFormValid, setIsFormValid] = useState(false);
+  const dispatch = useDispatch()
 
   const validateEmail = (email) => {
     const re = /\S+@\S+\.\S+/;
@@ -30,24 +33,27 @@ const LoginPage = () => {
     try {
       const userCred = await signInWithEmailAndPassword(firebaseAuth, email, password);
       if (userCred) {
-        console.log("User Id", userCred.user.uid);
         const userDocRef = doc(firestoreDB, "users", userCred.user.uid);
         const docSnap = await getDoc(userDocRef);
 
         if (docSnap.exists()) {
           console.log("User Data:", docSnap.data());
+          dispatch(SET_USER(docSnap.data()));
         } else {
           console.log("User not registered fully!");
-
         }
+
       }
+      //navigation.replace("Home");
+
     } catch (err) {
       console.log("Error:", err.message);
       if(err.message.includes("invalid-credential")){
-        alert("Invalid credential")
+        alert("Invalid credential");
       }
     }
   };
+
 
   return (
     <View style={styles.container}>
