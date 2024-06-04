@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import {
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { QuerySnapshot, collection, onSnapshot, orderBy, query, setDoc } from 'firebase/firestore';
+import { QuerySnapshot, collection, onSnapshot, orderBy, query, setDoc, getDocs } from 'firebase/firestore';
 import { firestoreDB } from '../components/firebase.config';
 import { doc } from 'firebase/firestore';
 
@@ -31,10 +31,28 @@ const Home = () => {
   const [groupName, setGroupName] = useState('');
   const [imageLink, setImageLink] = useState('');
   const [chats, setChats] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
 
-  const handleProfilePress = () => {
-    navigation.navigate('Profile'); // Assuming you have a Profile screen in your navigator
-  };
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const usersCollection = collection(firestoreDB, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+      const userData = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        selected: doc.id === user.id  // Mark user as selected if ID matches logged-in user's ID
+      }));
+      setUsers(userData);
+
+    };
+    setSelectedUserIds([user.id]);
+    setSelectedUsers([user]);
+  
+    fetchUsers();
+  }, [user.id]);
+  
 
   useLayoutEffect(() => {
     const chatQuery = query(collection(firestoreDB, "chats"), orderBy("_id", "desc"));
@@ -46,6 +64,10 @@ const Home = () => {
     return unsubscribe;
   }, []);
 
+  const handleProfilePress = () => {
+    navigation.navigate('ProfilePage');
+  };
+
   const handleAddNewChatRoom = () => {
     setModalVisible(true);
   };
@@ -54,6 +76,7 @@ const Home = () => {
     setModalVisible(false);
     setGroupName('');
     setImageLink('');
+    
   };
 
   const handleGroupNameChange = (text) => {
@@ -62,6 +85,18 @@ const Home = () => {
 
   const handleImageLinkChange = (text) => {
     setImageLink(text);
+  };
+
+  const handleUserSelection = (userId) => {
+    const index = selectedUserIds.indexOf(userId);
+    if (index === -1) {
+      setSelectedUserIds([...selectedUserIds, userId]);
+      const user = users.find(user => user.id === userId);
+      setSelectedUsers([...selectedUsers, user]);
+    } else {
+      setSelectedUserIds(selectedUserIds.filter(id => id !== userId));
+      setSelectedUsers(selectedUsers.filter(user => user.id !== userId));
+    }
   };
 
   const handleCreateChatRoom = async () => {
@@ -100,7 +135,7 @@ const Home = () => {
   const createChatRoom = (id) => {
     const _doc = {
       _id: id,
-      user: user,
+      users: selectedUsers,
       groupName: groupName,
       groupImage: imageLink ? imageLink : "https://tse1.mm.bing.net/th?id=OIP.4-7WHmM-lc_CFLvqaQpHUQAAAA&pid=Api&P=0&h=220",
     };
@@ -109,6 +144,8 @@ const Home = () => {
       .then(() => {
         setGroupName("");
         setImageLink("");
+        setSelectedUsers([]);
+        setSelectedUserIds([]);
       })
       .catch((err) => {
         Alert.alert("Error: " + err);
@@ -215,39 +252,59 @@ const Home = () => {
       </View>
 
       <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={handleModalClose}
-      >
-        <KeyboardAvoidingView
-          style={styles.modalContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={styles.modalContent}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter group name"
-              placeholderTextColor="#999"
-              value={groupName}
-              onChangeText={handleGroupNameChange}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Provide image link"
-              placeholderTextColor="#999"
-              value={imageLink}
-              onChangeText={handleImageLinkChange}
-            />
-            <TouchableOpacity style={styles.button} onPress={handleCreateChatRoom}>
-              <Text style={styles.buttonText}>Create Chat Room</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={handleModalClose}>
-              <Text style={styles.buttonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+  animationType="slide"
+  transparent={true}
+  visible={modalVisible}
+  onRequestClose={handleModalClose}
+>
+  <KeyboardAvoidingView
+    style={styles.modalContainer}
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  >
+    <View style={styles.modalContent}>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter group name"
+        placeholderTextColor="#999"
+        value={groupName}
+        onChangeText={handleGroupNameChange}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Provide image link"
+        placeholderTextColor="#999"
+        value={imageLink}
+        onChangeText={handleImageLinkChange}
+      />
+      <View style={styles.dropdownContainer}>
+        <Text style={styles.dropdownLabel}>Select Users:</Text>
+        <View style={styles.dropdown}>
+          {users.map(user => (
+            <View key={user.id} style={styles.userItem}>
+              <TouchableOpacity
+                style={[
+                  styles.checkbox,
+                  selectedUserIds.includes(user.id) && styles.checkedCheckbox
+                ]}
+                onPress={() => handleUserSelection(user.id)}
+              >
+                {selectedUserIds.includes(user.id) && <Icon name="check" size={24} color="#fff" />}
+              </TouchableOpacity>
+              <Text style={styles.userName}>{user.fullName}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+      <TouchableOpacity style={styles.button} onPress={handleCreateChatRoom}>
+        <Text style={styles.buttonText}>Create Chat Room</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.closeButton} onPress={handleModalClose}>
+        <Text style={styles.buttonText}>Close</Text>
+      </TouchableOpacity>
+    </View>
+  </KeyboardAvoidingView>
+</Modal>
+
     </View>
   );
 };
@@ -270,6 +327,10 @@ const MessageCard = ({ room }) => {
     </TouchableOpacity>
   );
 };
+
+
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -436,6 +497,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
+  userItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  checkedCheckbox: {
+    backgroundColor: '#007bff',
+  },
+  userName: {
+    fontSize: 16,
+    color: '#000',
+  },
+  
 });
 
 export default Home;

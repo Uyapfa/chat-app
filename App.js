@@ -10,6 +10,7 @@ import Store from './store/store';
 import { Provider } from 'react-redux';
 import LoadingScreen from './pages/LoadingScreen';
 import GroupChat from './pages/ChatScreenGrup';
+import ProfilePage from './pages/ProfileScreen';
 
 const Stack = createStackNavigator();
 
@@ -24,6 +25,7 @@ function App() {
           <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
           <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
           <Stack.Screen name="GroupChat" component={GroupChat} options={{ headerShown: false }} />
+          <Stack.Screen name="ProfilePage" component={ProfilePage} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>
