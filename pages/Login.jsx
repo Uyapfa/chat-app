@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Dimensions, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { signInWithEmailAndPassword } from '@firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { firebaseAuth, firestoreDB } from '../components/firebase.config';
-import { getDoc, doc,docS } from 'firebase/firestore';
+import { getDoc, doc, docS } from 'firebase/firestore';
 import { useDispatch } from 'react-redux';
 import { SET_USER } from '../store/actions/userActions';
 
 const { width, height } = Dimensions.get('window');
 
-const LoginPage = () => { 
+const LoginPage = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,89 +48,92 @@ const LoginPage = () => {
 
     } catch (err) {
       console.log("Error:", err.message);
-      if(err.message.includes("invalid-credential")){
+      if (err.message.includes("invalid-credential")) {
         alert("Invalid credential");
       }
     }
   };
 
-
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.navigate('Landing')} style={styles.backButton}>
-        <Image source={require('../assets/Back.png')} style={styles.backButton} />
-      </TouchableOpacity>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : null}
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        <TouchableOpacity onPress={() => navigation.navigate('Landing')} style={styles.backButton}>
+          <Image source={require('../assets/Back.png')} style={styles.backButtonImage} />
+        </TouchableOpacity>
 
-      <Text style={styles.title}>Log in to Chatbox</Text>
-      <Text style={styles.subtitle}>
-        Welcome back! Sign in using your {'\n'} social account or email to continue us
-      </Text>
+        <Text style={styles.title}>Log in to Chatbox</Text>
+        <Text style={styles.subtitle}>
+          Welcome back! Sign in using your {'\n'} social account or email to continue us
+        </Text>
 
-      <View style={styles.iconContainer}>
-        <Image source={require('../assets/facebook.png')} style={styles.icon} />
-        <Image source={require('../assets/google.png')} style={styles.icon} />
-        <Image source={require('../assets/apple.png')} style={styles.icon} />
-      </View>
-      
-      <View style={styles.orContainer}>
-        <View style={styles.line} />
-        <Text style={styles.orText}>OR</Text>
-        <View style={styles.line} />
-      </View>
-      <Text style={styles.label}>Your email</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email"
-        autoCapitalize="none"
-      />
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        secureTextEntry
-      />
+        <View style={styles.iconContainer}>
+          <Image source={require('../assets/facebook.png')} style={styles.icon} />
+          <Image source={require('../assets/google.png')} style={styles.icon} />
+          <Image source={require('../assets/apple.png')} style={styles.icon} />
+        </View>
 
-      <TouchableOpacity 
-        style={[styles.loginButton, { backgroundColor: isFormValid ? '#24786D' : '#A9A9A9' }]}
-        onPress={handleLogin}
-        disabled={!isFormValid}
-      >
-        <Text style={styles.loginButtonText}>Log in</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.forgotPasswordButton}>
-        <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.orContainer}>
+          <View style={styles.line} />
+          <Text style={styles.orText}>OR</Text>
+          <View style={styles.line} />
+        </View>
+        <Text style={styles.label}>Your email</Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Email"
+          autoCapitalize="none"
+        />
+        <Text style={styles.label}>Password</Text>
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Password"
+          secureTextEntry
+        />
+
+        <TouchableOpacity
+          style={[styles.loginButton, { backgroundColor: isFormValid ? '#24786D' : '#A9A9A9' }]}
+          onPress={handleLogin}
+          disabled={!isFormValid}
+        >
+          <Text style={styles.loginButtonText}>Log in</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.forgotPasswordButton}>
+          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
     paddingHorizontal: width * 0.05,
+    paddingBottom: height * -1.7,
   },
   title: {
     fontSize: width * 0.06,
     fontWeight: 'bold',
-    position: 'absolute',
-    top: height * 0.16,
+    marginBottom: height * 0.02,
+    marginTop: height * 0.15,
   },
   subtitle: {
-    fontFamily: 'Poppins',
     fontWeight: '700',
     fontSize: width * 0.035,
     lineHeight: width * 0.05,
     textAlign: 'center',
-    position: 'absolute',
-    top: height * 0.22,
-    color: '#797C7B'
+    color: '#797C7B',
+    marginBottom: height * 0.07,
   },
   label: {
     alignSelf: 'flex-start',
@@ -141,14 +144,16 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    height: height * 0.03,
+    height: height * 0.06,
     borderBottomWidth: 1,
     borderBottomColor: '#CDD1D0',
     marginBottom: 20,
     fontSize: width * 0.04,
   },
   forgotPasswordButton: {
-    top: height * 0.17,
+    position: 'absolute',
+    bottom: height * 0.05,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -159,28 +164,30 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: height * 0.04,
+    top: height * 0.06,
     left: width * 0.03,
+    zIndex: 1,
+  },
+  backButtonImage: {
     width: width * 0.06,
     height: width * 0.06,
-    zIndex: 1,
   },
   iconContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    marginTop: height * 0.1,
+    marginBottom: height * 0.05,
   },
   icon: {
     width: width * 0.14,
     height: width * 0.14,
-    marginHorizontal: width * 0.04,
+    marginRight: width * 0.05,
+
   },
   orContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: height * 0.04,
-    width: '80%',
+    marginBottom: height * 0.05,
   },
   line: {
     flex: 1,
@@ -188,7 +195,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#CDD1D0',
   },
   orText: {
-    fontFamily: 'Poppins',
     fontSize: width * 0.04,
     fontWeight: '500',
     color: '#797C7B',
@@ -200,10 +206,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
-    top: height * 0.15,
+    backgroundColor: '#24786D',
+    marginBottom: height * 0.1,
+    marginTop: height * 0.04,
   },
   loginButtonText: {
-    fontFamily: 'Poppins',
     fontSize: width * 0.05,
     fontWeight: '700',
     color: '#fff',

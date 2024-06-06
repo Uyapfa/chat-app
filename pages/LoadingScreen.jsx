@@ -35,7 +35,7 @@ const LoadingScreen = () => {
     
            
             setTimeout(() => {
-                navigation.replace("Login");
+                navigation.replace("Landing");
               }, 2000);
        
       }
@@ -70,9 +70,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   image: {
-    width: width * 0.5, // Adjust image size as per your requirement
-    height: width * 0.12, // Adjust image size as per your requirement
-    marginBottom: height * 0.1, // Adjust spacing between image and activity indicator
+    width: width * 0.5, 
+    height: width * 0.12, 
+    marginBottom: height * 0.1, 
   },
 });
 

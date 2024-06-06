@@ -17,9 +17,10 @@ import {
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { QuerySnapshot, collection, onSnapshot, orderBy, query, setDoc, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, setDoc, getDocs } from 'firebase/firestore';
 import { firestoreDB } from '../components/firebase.config';
 import { doc } from 'firebase/firestore';
+import * as ImagePicker from 'expo-image-picker';
 
 const Home = () => {
   const user = useSelector((state) => state.user.user);
@@ -35,6 +36,11 @@ const Home = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
 
+
+  useEffect(() => {
+    setImageLink('https://tse1.mm.bing.net/th?id=OIP.4-7WHmM-lc_CFLvqaQpHUQAAAA&pid=Api&P=0&h=220');
+  }, []);
+  
   useEffect(() => {
     const fetchUsers = async () => {
       const usersCollection = collection(firestoreDB, 'users');
@@ -42,27 +48,37 @@ const Home = () => {
       const userData = usersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        selected: doc.id === user.id  // Mark user as selected if ID matches logged-in user's ID
+        selected: false // Set all users initially as not selected
       }));
+  
+      // Set the logged-in user's selected status to true if found
+      const loggedInUserIndex = userData.findIndex(u => u.id === user.id);
+      if (loggedInUserIndex !== -1) {
+        userData[loggedInUserIndex].selected = true;
+      }
+  
       setUsers(userData);
-
     };
+  
     setSelectedUserIds([user.id]);
     setSelectedUsers([user]);
   
     fetchUsers();
   }, [user.id]);
   
-
   useLayoutEffect(() => {
     const chatQuery = query(collection(firestoreDB, "chats"), orderBy("_id", "desc"));
-    const unsubscribe = onSnapshot(chatQuery, (querySnapShot) => {
-      const chatRooms = querySnapShot.docs.map(doc => doc.data());
+    const unsubscribe = onSnapshot(chatQuery, (querySnapshot) => {
+      const chatRooms = querySnapshot.docs
+        .map(doc => doc.data())
+        .filter(room => room.users && room.users.some(user => user._id === user.id)); // Filter chats that have the current user's ID
+  
       setChats(chatRooms);
       setLoading(false);
     });
     return unsubscribe;
-  }, []);
+  }, [user.id]);
+  
 
   const handleProfilePress = () => {
     navigation.navigate('ProfilePage');
@@ -76,16 +92,12 @@ const Home = () => {
     setModalVisible(false);
     setGroupName('');
     setImageLink('');
-    
   };
 
   const handleGroupNameChange = (text) => {
     setGroupName(text);
   };
 
-  const handleImageLinkChange = (text) => {
-    setImageLink(text);
-  };
 
   const handleUserSelection = (userId) => {
     const index = selectedUserIds.indexOf(userId);
@@ -105,28 +117,6 @@ const Home = () => {
     if (!groupName) {
       Alert.alert("Group name cannot be empty!");
       return;
-    }
-
-    if (!imageLink) {
-      Alert.alert(
-        "Image Link Empty",
-        "The image link is empty. Do you want to continue with the default image?",
-        [
-          {
-            text: "Cancel",
-            onPress: () => {},
-            style: "cancel"
-          },
-          {
-            text: "OK",
-            onPress: () => {
-              setImageLink("https://tse1.mm.bing.net/th?id=OIP.4-7WHmM-lc_CFLvqaQpHUQAAAA&pid=Api&P=0&h=220");
-              createChatRoom(id);
-            }
-          }
-        ],
-        { cancelable: false }
-      );
     } else {
       createChatRoom(id);
     }
@@ -135,9 +125,10 @@ const Home = () => {
   const createChatRoom = (id) => {
     const _doc = {
       _id: id,
+      createdBy: user,
       users: selectedUsers,
       groupName: groupName,
-      groupImage: imageLink ? imageLink : "https://tse1.mm.bing.net/th?id=OIP.4-7WHmM-lc_CFLvqaQpHUQAAAA&pid=Api&P=0&h=220",
+      groupImage: imageLink,
     };
 
     setDoc(doc(firestoreDB, "chats", id), _doc)
@@ -154,6 +145,52 @@ const Home = () => {
     handleModalClose();
     Alert.alert("Success", "Group Chat created successfully!");
   };
+  useEffect(() => {
+    // Request permission to access the device's image library
+    (async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Sorry, we need camera roll permissions to make this work!');
+      }
+    })();
+  }, []);
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.cancelled) {
+      const { uri } = result;
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Upload image to Firebase Storage
+      const storageRef = storage.ref().child(`images/${user.id}/${Date.now()}`);
+      const uploadTask = storageRef.put(blob);
+
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          // Handle progress
+          console.log("Upload is " + (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "% done");
+        }, 
+        (error) => {
+          // Handle error
+          console.error(error);
+        }, 
+        () => {
+          // Handle successful upload
+          uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+            // Set the image link to the download URL
+            setImageLink(downloadURL);
+          });
+        }
+      );
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -215,22 +252,24 @@ const Home = () => {
             </View>
           </ScrollView>
         </View>
-        <View style={[styles.messageView, { height: screenHeight - 200 }]}>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="black" />
-            </View>
-          ) : (
-            <>
-              {chats && chats.length > 0 ? (
-                chats.map(room => (
-                  <MessageCard key={room._id} room={room} />
-                ))
-              ) : (
-                <View><ActivityIndicator/></View>              )}
-            </>
-          )}
-        </View>
+        <View style={[styles.messageView]}>
+  {loading ? (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="black" />
+    </View>
+  ) : (
+    <>
+      {chats && chats.length > 0 ? (
+        chats.map(room => (
+          <MessageCard key={room._id} room={room} />
+        ))
+      ) : (
+        <View><ActivityIndicator/></View>              
+      )}
+    </>
+  )}
+</View>
+
       </ScrollView>
       <View style={styles.bottomNav}>
         <View style={styles.navItem}>
@@ -252,69 +291,66 @@ const Home = () => {
       </View>
 
       <Modal
-  animationType="slide"
-  transparent={true}
-  visible={modalVisible}
-  onRequestClose={handleModalClose}
->
-  <KeyboardAvoidingView
-    style={styles.modalContainer}
-    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-  >
-    <View style={styles.modalContent}>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter group name"
-        placeholderTextColor="#999"
-        value={groupName}
-        onChangeText={handleGroupNameChange}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Provide image link"
-        placeholderTextColor="#999"
-        value={imageLink}
-        onChangeText={handleImageLinkChange}
-      />
-      <View style={styles.dropdownContainer}>
-        <Text style={styles.dropdownLabel}>Select Users:</Text>
-        <View style={styles.dropdown}>
-          {users.map(user => (
-            <View key={user.id} style={styles.userItem}>
-              <TouchableOpacity
-                style={[
-                  styles.checkbox,
-                  selectedUserIds.includes(user.id) && styles.checkedCheckbox
-                ]}
-                onPress={() => handleUserSelection(user.id)}
-              >
-                {selectedUserIds.includes(user.id) && <Icon name="check" size={24} color="#fff" />}
-              </TouchableOpacity>
-              <Text style={styles.userName}>{user.fullName}</Text>
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={handleModalClose}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.modalContent}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter group name"
+              placeholderTextColor="#999"
+              value={groupName}
+              onChangeText={handleGroupNameChange}
+            />
+            <TouchableOpacity  onPress={pickImage}>
+        
+        <Image source={{ uri: imageLink }} style={styles.profilePic} />
+
+      </TouchableOpacity>
+            <View style={styles.dropdownContainer}>
+              <Text style={styles.dropdownLabel}>Select Users:</Text>
+              <View style={styles.dropdown}>
+                {users.map(user => (
+                  <View key={user.id} style={styles.userItem}>
+                    <TouchableOpacity
+                      style={[
+                        styles.checkbox,
+                        selectedUserIds.includes(user.id) && styles.checkedCheckbox
+                      ]}
+                      onPress={() => handleUserSelection(user.id)}
+                    >
+                      {selectedUserIds.includes(user.id) && <Icon name="check" size={24} color="#fff" />}
+                    </TouchableOpacity>
+                    <Text style={styles.userName}>{user.fullName}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          ))}
-        </View>
-      </View>
-      <TouchableOpacity style={styles.button} onPress={handleCreateChatRoom}>
-        <Text style={styles.buttonText}>Create Chat Room</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.closeButton} onPress={handleModalClose}>
-        <Text style={styles.buttonText}>Close</Text>
-      </TouchableOpacity>
-    </View>
-  </KeyboardAvoidingView>
-</Modal>
+            <TouchableOpacity style={styles.button} onPress={handleCreateChatRoom}>
+              <Text style={styles.buttonText}>Create Chat Room</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={handleModalClose}>
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
     </View>
   );
 };
 
 const MessageCard = ({ room }) => {
-
   const navigation = useNavigation();
 
   return (
-    <TouchableOpacity style={styles.messageCard} onPress={() => navigation.navigate("GroupChat", {room : room})} >
+    <TouchableOpacity style={styles.messageCard} onPress={() => navigation.navigate("GroupChat", { room })}>
       <Image
         source={{ uri: room.groupImage }}
         style={styles.groupIcon}
@@ -323,19 +359,19 @@ const MessageCard = ({ room }) => {
         <Text style={styles.groupName}>{room.groupName}</Text>
         <Text style={styles.messageText}>Another message</Text>
       </View>
-      <Text style={styles.timeText}>1:45 PM</Text>
+      <Text style={styles.timeText}>2 min ago</Text>
     </TouchableOpacity>
   );
 };
-
-
-
-
+const screenWidth = Dimensions.get('window').width;
+const screenHeight = Dimensions.get('window').height;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000E08',
+      width: screenWidth,
+    height: screenHeight,
   },
   header: {
     height: 100,
@@ -398,7 +434,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 40,
     marginTop: 20,
     padding: 18,
-    width: '100%',
+    flex: 1,
+    flexGrow: 1,
+    //justifyContent: 'flex-end',
+    height: screenHeight - 120, 
   },
   loadingContainer: {
     flex: 1,
@@ -416,6 +455,9 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     marginRight: 10,
+    borderRadius: 25,
+    borderWidth: 0.5, // Add border width
+  borderColor: '#ccc',
   },
   messageContent: {
     flex: 1,
@@ -519,7 +561,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
   },
-  
 });
 
 export default Home;

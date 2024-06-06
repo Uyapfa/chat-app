@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
         height: 19.2,
        // aspectRatio: 6 / 0.5,
         marginBottom: '6%',
-        marginTop: '11%',
+        marginTop: '5%',
     },
     textContainer: {
         width: '90%',
@@ -94,10 +94,10 @@ const styles = StyleSheet.create({
     },
     bodyText: {
         fontFamily: Platform.OS === 'ios' ? 'Helvetica' : 'Roboto',
-        fontSize: width * 0.05,
+        fontSize: width * 0.04,
         fontWeight: '500',
         color: '#FFFFFF',
-        paddingTop: '5%',
+        paddingTop: '12%',
     },
     iconContainer: {
         flexDirection: 'row',
@@ -119,6 +119,7 @@ const styles = StyleSheet.create({
         flex: 1,
         height: 1,
         backgroundColor: 'gray',
+        marginTop: '5%'
     },
     orText: {
         fontFamily: Platform.OS === 'ios' ? 'Helvetica' : 'Roboto',
@@ -126,6 +127,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         color: '#D6E4E0',
         marginHorizontal: '3%',
+        marginTop: '5%'
     },
     button: {
         width: '90%',
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
         color: '#24786D',
     },
     loginText: {
-        marginTop: '5%',
+        marginTop: '4%',
         fontFamily: Platform.OS === 'ios' ? 'Helvetica' : 'Roboto',
         fontSize: width * 0.04,
         fontWeight: '500',
