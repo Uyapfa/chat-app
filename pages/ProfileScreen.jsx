@@ -226,6 +226,8 @@ const styles = StyleSheet.create({
         height: 85,
         borderRadius: 60,
         marginBottom: 10,
+        borderWidth: 0.5, // Add border width
+        borderColor: '#ccc',
     },
     fullName: {
         fontFamily: 'Poppins',
@@ -270,8 +272,8 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingHorizontal: 20,
-        elevation: 3, // Adds shadow for Android
-        shadowColor: '#000', // Adds shadow for iOS
+        elevation: 3, 
+        shadowColor: '#000', 
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 2,

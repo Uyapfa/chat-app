@@ -5,13 +5,13 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { firebaseAuth, firestoreDB } from '../components/firebase.config';
 import { doc, setDoc } from 'firebase/firestore';
 import { useDispatch } from 'react-redux';
-import { SET_USER_NULL } from '../store/actions/userActions';
+
 
 const { width, height } = Dimensions.get('window');
 
 const Register = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+ 
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -59,11 +59,12 @@ const Register = () => {
   
 
       alert('User registered successfully!');
-      navigation.navigate('Login')
+     
       setEmail('');
       setPassword('');
       setConfirmPassword('');
       setName('');
+      navigation.navigate('Login')
     } catch (error) {
       alert('Registration error: ' + error.message);
     } finally {

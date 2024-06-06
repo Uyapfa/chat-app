@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Dimensions, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Dimensions, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import { signInWithEmailAndPassword } from '@firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { firebaseAuth, firestoreDB } from '../components/firebase.config';
-import { getDoc, doc, docS } from 'firebase/firestore';
+import { getDoc, doc } from 'firebase/firestore';
 import { useDispatch } from 'react-redux';
 import { SET_USER } from '../store/actions/userActions';
 
@@ -14,7 +14,8 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isFormValid, setIsFormValid] = useState(false);
-  const dispatch = useDispatch()
+  const [loading, setLoading] = useState(false);  // Add loading state
+  const dispatch = useDispatch();
 
   const validateEmail = (email) => {
     const re = /\S+@\S+\.\S+/;
@@ -30,30 +31,34 @@ const LoginPage = () => {
   }, [email, password]);
 
   const handleLogin = async () => {
+    setLoading(true);  
     try {
       const userCred = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      console.log("User Credential:", userCred); 
       if (userCred) {
         const userDocRef = doc(firestoreDB, "users", userCred.user.uid);
         const docSnap = await getDoc(userDocRef);
-
+      
         if (docSnap.exists()) {
           console.log("User Data:", docSnap.data());
-          dispatch(SET_USER(docSnap.data()));
+          await dispatch(SET_USER(docSnap.data())); 
+          navigation.replace("Home");
         } else {
           console.log("User not registered fully!");
         }
-
       }
-      //navigation.replace("Home");
-
+      
+      
     } catch (err) {
       console.log("Error:", err.message);
       if (err.message.includes("invalid-credential")) {
         alert("Invalid credential");
       }
+    } finally {
+      setLoading(false);  // Set loading to false after login attempt
     }
   };
-
+  
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -88,7 +93,7 @@ const LoginPage = () => {
           placeholder="Email"
           autoCapitalize="none"
         />
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}></Text>
         <TextInput
           style={styles.input}
           value={password}
@@ -100,12 +105,16 @@ const LoginPage = () => {
         <TouchableOpacity
           style={[styles.loginButton, { backgroundColor: isFormValid ? '#24786D' : '#A9A9A9' }]}
           onPress={handleLogin}
-          disabled={!isFormValid}
+          disabled={!isFormValid || loading}  // Disable button when loading
         >
-          <Text style={styles.loginButtonText}>Log in</Text>
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />  // Show loading indicator when loading
+          ) : (
+            <Text style={styles.loginButtonText}>Log in</Text>
+          )}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.forgotPasswordButton}>
-          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+        <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => navigation.navigate('Login')} >
+          <Text style={styles.forgotPasswordText}>Create an account</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -182,7 +191,6 @@ const styles = StyleSheet.create({
     width: width * 0.14,
     height: width * 0.14,
     marginRight: width * 0.05,
-
   },
   orContainer: {
     flexDirection: 'row',

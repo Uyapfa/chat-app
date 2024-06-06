@@ -24,20 +24,16 @@ const LoadingScreen = () => {
         const docSnap = await getDoc(userDocRef);
 
         if (docSnap.exists()) {
-          console.log("User Data:", docSnap.data());
-          dispatch(SET_USER(docSnap.data()));
-        } 
+          await dispatch(SET_USER(docSnap.data()));
+        }
 
         setTimeout(() => {
           navigation.replace("Home");
         }, 2000);
       } else {
-    
-           
-            setTimeout(() => {
-                navigation.replace("Landing");
-              }, 2000);
-       
+        setTimeout(() => {
+          navigation.replace("Landing");
+        }, 2000);
       }
     });
   };

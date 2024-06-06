@@ -30,17 +30,21 @@ const GroupChat = ({ route }) => {
   console.log("Room : ", room);
 
   useLayoutEffect(() => {
+    setLoading(true);
     const msgQuery = query(
       collection(firestoreDB, "chats", room?._id, "messages"),
       orderBy("timeStamp", "asc")
     );
-
+  
     const unsubscribe = onSnapshot(msgQuery, (querySnap) => {
       const upMsg = querySnap.docs.map(doc => doc.data());
       setMessages(upMsg);
       setLoading(false);
+    }, error => {
+      console.error("Error fetching messages:", error);
+      setLoading(false);
     });
-
+  
     return unsubscribe;
   }, []);
 
@@ -50,7 +54,7 @@ const GroupChat = ({ route }) => {
 
   const handleTyping = (text) => {
     setMessage(text);
-    setIsTyping(text.length > 0); // Check if text is typed to show/hide send button
+    setIsTyping(text.length > 0); 
   };
 
   const sendMessage = async () => {
@@ -271,6 +275,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: 10,
+    borderColor: '#00',
+    borderWidth: 0.5,
   },
   senderName: {
     fontSize: 18,

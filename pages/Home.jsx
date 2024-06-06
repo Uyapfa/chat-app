@@ -30,12 +30,12 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupName, setGroupName] = useState('');
-  const [imageLink, setImageLink] = useState('');
+  const [imageLink, setImageLink] = useState('https://tse1.mm.bing.net/th?id=OIP.4-7WHmM-lc_CFLvqaQpHUQAAAA&pid=Api&P=0&h=220');
   const [chats, setChats] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
-
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   useEffect(() => {
     setImageLink('https://tse1.mm.bing.net/th?id=OIP.4-7WHmM-lc_CFLvqaQpHUQAAAA&pid=Api&P=0&h=220');
@@ -52,7 +52,7 @@ const Home = () => {
       }));
   
       // Set the logged-in user's selected status to true if found
-      const loggedInUserIndex = userData.findIndex(u => u.id === user.id);
+      const loggedInUserIndex = userData.findIndex(u => u.id === user._id);
       if (loggedInUserIndex !== -1) {
         userData[loggedInUserIndex].selected = true;
       }
@@ -71,7 +71,7 @@ const Home = () => {
     const unsubscribe = onSnapshot(chatQuery, (querySnapshot) => {
       const chatRooms = querySnapshot.docs
         .map(doc => doc.data())
-        .filter(room => room.users && room.users.some(user => user._id === user.id)); // Filter chats that have the current user's ID
+        .filter(room => room.users && room.users.some(user => user._id === user._id)); // Filter chats that have the current user's ID
   
       setChats(chatRooms);
       setLoading(false);
@@ -91,7 +91,7 @@ const Home = () => {
   const handleModalClose = () => {
     setModalVisible(false);
     setGroupName('');
-    setImageLink('');
+    setImageLink('https://tse1.mm.bing.net/th?id=OIP.4-7WHmM-lc_CFLvqaQpHUQAAAA&pid=Api&P=0&h=220');
   };
 
   const handleGroupNameChange = (text) => {
@@ -134,7 +134,7 @@ const Home = () => {
     setDoc(doc(firestoreDB, "chats", id), _doc)
       .then(() => {
         setGroupName("");
-        setImageLink("");
+        setImageLink("https://tse1.mm.bing.net/th?id=OIP.4-7WHmM-lc_CFLvqaQpHUQAAAA&pid=Api&P=0&h=220");
         setSelectedUsers([]);
         setSelectedUserIds([]);
       })
@@ -167,23 +167,19 @@ const Home = () => {
       const response = await fetch(uri);
       const blob = await response.blob();
 
-      // Upload image to Firebase Storage
       const storageRef = storage.ref().child(`images/${user.id}/${Date.now()}`);
       const uploadTask = storageRef.put(blob);
 
       uploadTask.on('state_changed', 
         (snapshot) => {
-          // Handle progress
           console.log("Upload is " + (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "% done");
         }, 
         (error) => {
-          // Handle error
           console.error(error);
         }, 
         () => {
-          // Handle successful upload
           uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-            // Set the image link to the download URL
+            
             setImageLink(downloadURL);
           });
         }
@@ -191,9 +187,11 @@ const Home = () => {
     }
   };
 
-
+ 
   return (
     <View style={styles.container}>
+
+
       <View style={styles.header}>
         <View style={styles.headerIcons}>
           <Image
@@ -212,9 +210,10 @@ const Home = () => {
           />
         </TouchableOpacity>
       </View>
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <View style={styles.statusContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+  
+       
+        <View style={styles.statusContainer} >
+          
             <View style={styles.statusItem}>
               <Image
                 source={require('../assets/status-icon1.png')}
@@ -250,8 +249,12 @@ const Home = () => {
               />
               <Text style={styles.statusText}>Status 5</Text>
             </View>
-          </ScrollView>
+          
         </View>
+        <View style={styles.messageBackground}>
+
+
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={[styles.messageView]}>
   {loading ? (
     <View style={styles.loadingContainer}>
@@ -270,7 +273,8 @@ const Home = () => {
   )}
 </View>
 
-      </ScrollView>
+</ScrollView >
+</View>
       <View style={styles.bottomNav}>
         <View style={styles.navItem}>
           <Image source={require('../assets/Message.png')} style={styles.navIcon} />
@@ -289,17 +293,19 @@ const Home = () => {
           <Text style={styles.navText}>Settings</Text>
         </View>
       </View>
-
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} >
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
         onRequestClose={handleModalClose}
+    
       >
         <KeyboardAvoidingView
           style={styles.modalContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
+         
           <View style={styles.modalContent}>
             <TextInput
               style={styles.input}
@@ -339,9 +345,11 @@ const Home = () => {
               <Text style={styles.buttonText}>Close</Text>
             </TouchableOpacity>
           </View>
+        
+          
         </KeyboardAvoidingView>
       </Modal>
-
+      </ScrollView>
     </View>
   );
 };
@@ -352,7 +360,7 @@ const MessageCard = ({ room }) => {
   return (
     <TouchableOpacity style={styles.messageCard} onPress={() => navigation.navigate("GroupChat", { room })}>
       <Image
-        source={{ uri: room.groupImage }}
+        source={{ uri: room.groupImage || "https://tse1.mm.bing.net/th?id=OIP.4-7WHmM-lc_CFLvqaQpHUQAAAA&pid=Api&P=0&h=220" }}
         style={styles.groupIcon}
       />
       <View style={styles.messageContent}>
@@ -370,9 +378,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000E08',
-      width: screenWidth,
-    height: screenHeight,
-  },
+    width: screenWidth,
+    flexGrow: 1,},
   header: {
     height: 100,
     flexDirection: 'row',
@@ -380,15 +387,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 24,
     backgroundColor: '#000E08',
-    position: 'absolute',
     paddingTop: 30,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
   },
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#000E08',
   },
   icon: {
     width: 44,
@@ -412,8 +416,9 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     flexDirection: 'row',
-    marginTop: 110,
+   // marginTop: 110,
     paddingVertical: 16,
+    backgroundColor: '#000E08',
   },
   statusItem: {
     alignItems: 'center',
@@ -437,7 +442,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexGrow: 1,
     //justifyContent: 'flex-end',
-    height: screenHeight - 120, 
+    height: 1200, 
   },
   loadingContainer: {
     flex: 1,
