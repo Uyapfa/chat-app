@@ -64,7 +64,7 @@ const Register = () => {
       setPassword('');
       setConfirmPassword('');
       setName('');
-      //navigation.navigate('Login')
+      navigation.navigate('Login')
     } catch (error) {
       alert('Registration error: ' + error.message);
     } finally {
