@@ -48,10 +48,10 @@ const Home = () => {
       const userData = usersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        selected: false // Set all users initially as not selected
+        selected: false 
       }));
   
-      // Set the logged-in user's selected status to true if found
+     
       const loggedInUserIndex = userData.findIndex(u => u.id === user._id);
       if (loggedInUserIndex !== -1) {
         userData[loggedInUserIndex].selected = true;
@@ -71,7 +71,7 @@ const Home = () => {
     const unsubscribe = onSnapshot(chatQuery, (querySnapshot) => {
       const chatRooms = querySnapshot.docs
         .map(doc => doc.data())
-        .filter(room => room.users && room.users.some(user => user._id === user._id)); // Filter chats that have the current user's ID
+        .filter(room => room.users && room.users.some(user => user._id === user._id)); 
   
       setChats(chatRooms);
       setLoading(false);
@@ -146,7 +146,7 @@ const Home = () => {
     Alert.alert("Success", "Group Chat created successfully!");
   };
   useEffect(() => {
-    // Request permission to access the device's image library
+    
     (async () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -244,7 +244,7 @@ const Home = () => {
             </View>
             <View style={styles.statusItem}>
               <Image
-                source={require('../assets/status-icon5.png')}
+                source={require('../assets/status5.png')}
                 style={styles.statusIcon}
               />
               <Text style={styles.statusText}>Status 5</Text>
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     height: 50,
     marginRight: 10,
     borderRadius: 25,
-    borderWidth: 0.5, // Add border width
+    borderWidth: 0.5, 
   borderColor: '#ccc',
   },
   messageContent: {
