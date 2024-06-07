@@ -8,7 +8,6 @@ import 'react-native-gesture-handler';
 import Register from './pages/Register'
 import Store from './store/store';
 import { Provider } from 'react-redux';
-import LoadingScreen from './pages/LoadingScreen';
 import GroupChat from './pages/ChatScreenGrup';
 import ProfilePage from './pages/ProfileScreen';
 
@@ -18,8 +17,7 @@ function App() {
   return (
     <Provider store={Store}>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="LoadingScreen">
-          <Stack.Screen name="LoadingScreen" component={LoadingScreen} options={{ headerShown: false }} />
+        <Stack.Navigator initialRouteName="Landing">
           <Stack.Screen name="Landing" component={LandingScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Login" component={LoginPage} options={{ headerShown: false }} />
           <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />

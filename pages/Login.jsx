@@ -14,7 +14,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isFormValid, setIsFormValid] = useState(false);
-  const [loading, setLoading] = useState(false);  // Add loading state
+  const [loading, setLoading] = useState(false);  
   const dispatch = useDispatch();
 
   const validateEmail = (email) => {
@@ -42,7 +42,7 @@ const LoginPage = () => {
         if (docSnap.exists()) {
           console.log("User Data:", docSnap.data());
           await dispatch(SET_USER(docSnap.data())); 
-          navigation.replace("Home");
+          navigation.navigate("Home");
         } else {
           console.log("User not registered fully!");
         }
@@ -55,7 +55,7 @@ const LoginPage = () => {
         alert("Invalid credential");
       }
     } finally {
-      setLoading(false);  // Set loading to false after login attempt
+      setLoading(false);  
     }
   };
   
@@ -113,7 +113,7 @@ const LoginPage = () => {
             <Text style={styles.loginButtonText}>Log in</Text>
           )}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => navigation.navigate('Login')} >
+        <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => navigation.navigate('Register')} >
           <Text style={styles.forgotPasswordText}>Create an account</Text>
         </TouchableOpacity>
       </ScrollView>
